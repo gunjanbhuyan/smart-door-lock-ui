@@ -18,6 +18,7 @@ code {
 
 /* The switch - the box around the slider */
 .switch {
+  margin-top: 4px;
   position: relative;
   display: inline-block;
   width: 53px;
