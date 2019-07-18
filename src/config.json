@@ -1,0 +1,5 @@
+{
+  "getStatus": "http://my-json-server.typicode.com/gunjanbhuyan/mock-service/get-status",
+  "lock": "http://my-json-server.typicode.com/gunjanbhuyan/mock-service",
+  "recognise": "https://my-json-server.typicode.com/gunjanbhuyan/mock-service/"
+}

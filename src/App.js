@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import { ToastContainer } from "react-toastify";
 import "./App.css";
 import "react-toastify/dist/ReactToastify.css";
 import Home from "./components/home";

@@ -1,7 +1,9 @@
 import React, { Component } from "react";
 import { toast, ToastContainer } from "react-toastify";
-import { getLockStatus } from "../services/lockService.js";
-import { getRecognitionStatus } from "../services/recogniseFaceService.js";
+import { getLockStatus, lock } from "../services/lockService.js";
+import { switchFaceRecognition } from "../services/recogniseFaceService.js";
+import NavBar from "./common/navBar.jsx";
+import Video from "./common/video.jsx";
 
 class Home extends Component {
   state = {
@@ -9,101 +11,89 @@ class Home extends Component {
     isRecognitionOn: false
   };
 
-  componentDidMount() {
-    this.handleGetStatus();
+  async componentDidMount() {
+    await this.handleGetStatus();
   }
 
-  handleLock = isLocked => {
+  async handleLock(isLocked) {
     console.log("lock/unlock request from application");
-    if (isLocked) {
-      //service call to unlock
-      this.setState({ isLocked: false });
-      toast.warn("Hey!, your door is UNLOCKED");
-    } else {
-      //service call to lock
-      this.setState({ isLocked: true });
-      toast.success("Your door is LOCKED");
+    let response;
+    try {
+      response = await lock(isLocked);
+    } catch (error) {
+      toast.error(
+        "Sorry! We are facing some problems. Your lock status may not be correct"
+      );
+      return;
     }
-  };
 
-  handleGetStatus = () => {
-    const lockStatus = getLockStatus();
+    if (response.data.isLocked) {
+      toast.success("Your door is LOCKED");
+    } else {
+      toast.warn("Hey!, your door is UNLOCKED");
+    }
+
+    this.setState({ isLocked: response.data.isLocked });
+  }
+
+  async handleGetStatus() {
     console.log("Connecting with getStatusService");
+    let response;
+    try {
+      response = await getLockStatus();
+    } catch (error) {
+      toast.error(
+        "Sorry! We are facing some problems. Your lock status may not be correct"
+      );
+      return;
+    }
 
-    if (lockStatus.status != "success") {
+    if (response.status !== 200 || response.data.status !== "success") {
       toast.error(
         "Sorry! We are facing some problems. Your lock status may not be correct"
       );
       console.log("Unsuccess response from getStatusService");
       return;
     }
-    console.log(lockStatus);
-    if (lockStatus.isLocked) {
+    console.log(response.data);
+    const lockStatus = response.data.isLocked;
+    if (lockStatus) {
       toast.success("Your door is LOCKED");
     } else {
       toast.warn("Hey!, your door is OPEN");
     }
 
     this.setState({
-      isLocked: lockStatus.isLocked
+      isLocked: lockStatus
     });
     console.log("Success response from getStatusService");
-  };
+  }
 
-  handleToggle = e => {
-    console.log(e.target.checked);
-    const isFaceRecognitionOn = e.target.checked;
-    if (isFaceRecognitionOn) {
+  async handleToggle(e) {
+    const requestForRecognition = e.target.checked;
+    const recognitionResponse = await switchFaceRecognition(
+      requestForRecognition
+    );
+    if (recognitionResponse.data.isRecognistionOn) {
       toast.info("Face recognition is ON");
     } else {
       toast.info("Face recognition is OFF");
     }
-  };
+  }
 
   render() {
     const { isLocked, isRecognitionOn } = this.state;
-    console.log(isLocked);
     return (
       <React.Fragment>
         <ToastContainer />
-        <nav className="navbar navbar-light bg-light">
-          <a className="navbar-brand" href="#">
-            <strong>Smart Door Lock</strong>
-          </a>
-          <div>
-            <span className="navbar-text face-recognition-box p-0 mr-2">
-              <img src={require("../images/face-recognition-icon.svg")} />
-            </span>
-            <span className="mr-4">
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  defaultChecked={isRecognitionOn}
-                  onClick={e => this.handleToggle(e)}
-                />
-                <span className="slider round" />
-              </label>
-            </span>
-            <i
-              className={
-                isLocked
-                  ? "fa fa-lock fa-2x float-right"
-                  : "fa fa-unlock fa-2x float-right"
-              }
-              aria-hidden="true"
-            />
-          </div>
-        </nav>
+        <NavBar
+          isLocked={isLocked}
+          isRecognitionOn={isRecognitionOn}
+          onToggle={this.handleToggle}
+          name="Smart Door Lock"
+        />
 
-        <div className="col-md-8 mx-auto mb-4 mt-4">
-          <div className="embed-responsive embed-responsive-16by9">
-            <iframe
-              title="content"
-              className="embed-responsive-item"
-              src="https://www.youtube.com/embed/zpOULjyy-n8?rel=0"
-            />
-          </div>
-        </div>
+        <Video data="https://www.youtube.com/embed/zpOULjyy-n8?rel=0" />
 
         <div className="d-flex justify-content-center mb-2">
           <button
